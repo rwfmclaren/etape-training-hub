@@ -18,6 +18,7 @@ class Settings(BaseSettings):
         "http://localhost:80",
         "http://localhost:3000",
         "http://localhost:5173",
+        "https://exciting-purpose-production.up.railway.app",
     ]
 
     class Config:
