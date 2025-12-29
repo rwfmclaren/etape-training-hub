@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://user:password@db:5432/etape_training"
 
     CORS_ORIGINS: list = [
+        "http://localhost",
+        "http://localhost:80",
         "http://localhost:3000",
         "http://localhost:5173",
     ]
