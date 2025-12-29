@@ -209,27 +209,37 @@ npm run dev
 - `DELETE /api/v1/admin/assignments/{id}` - End assignment
 - `GET /api/v1/admin/stats` - Get system statistics
 
-## Azure Deployment
+## Deployment
 
-The application is containerized and ready for Azure deployment:
+The application is containerized and ready for cloud deployment.
+
+### Railway Deployment (Recommended)
+
+See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for detailed Railway deployment instructions.
+
+Quick setup:
+1. Create two Railway services from this GitHub repo (backend + frontend)
+2. Add PostgreSQL database
+3. Configure environment variables:
+   - Backend: `DATABASE_URL`, `SECRET_KEY`, `CORS_ORIGINS`
+   - Frontend: `VITE_API_BASE_URL`
+4. Deploy automatically via GitHub integration
+
+### Azure Deployment
+
+The application can also be deployed to Azure:
 
 1. **Azure Container Registry**: Push Docker images
 2. **Azure Container Instances** or **Azure App Service**: Deploy containers
 3. **Azure Database for PostgreSQL**: Managed database service
 
-### Deployment Steps
-
-1. Build and push images to Azure Container Registry:
+Deployment steps:
 ```bash
 docker build -t <registry>.azurecr.io/etape-backend:latest ./backend
 docker build -t <registry>.azurecr.io/etape-frontend:latest ./frontend
 docker push <registry>.azurecr.io/etape-backend:latest
 docker push <registry>.azurecr.io/etape-frontend:latest
 ```
-
-2. Create Azure resources and deploy containers
-3. Configure environment variables in Azure
-4. Set up Azure Database for PostgreSQL
 
 ## License
 
