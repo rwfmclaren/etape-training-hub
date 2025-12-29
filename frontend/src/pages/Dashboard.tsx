@@ -222,7 +222,7 @@ export default function Dashboard() {
         target_value: goalTargetValue ? parseFloat(goalTargetValue) : undefined,
         current_value: goalCurrentValue ? parseFloat(goalCurrentValue) : undefined,
         unit: goalUnit || undefined,
-        target_date: goalTargetDate || undefined,
+        target_date: goalTargetDate ? `${goalTargetDate}T00:00:00` : undefined,
       };
 
       await goalsAPI.create(goalData);
