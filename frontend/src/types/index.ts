@@ -1,8 +1,12 @@
+export type UserRole = 'athlete' | 'trainer' | 'admin';
+
 export interface User {
   id: number;
   email: string;
   full_name?: string;
   is_active: boolean;
+  role: UserRole;
+  is_locked: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -125,4 +129,165 @@ export interface GoalCreate {
   current_value?: number;
   unit?: string;
   target_date?: string;
+}
+
+// Trainer-Athlete Relationships
+export interface TrainerRequest {
+  id: number;
+  athlete_id: number;
+  trainer_id: number;
+  status: 'pending' | 'approved' | 'rejected';
+  message?: string;
+  created_at: string;
+  responded_at?: string;
+}
+
+export interface TrainerRequestCreate {
+  trainer_id: number;
+  message?: string;
+}
+
+export interface TrainerAssignment {
+  id: number;
+  trainer_id: number;
+  athlete_id: number;
+  assigned_at: string;
+  is_active: boolean;
+  notes?: string;
+}
+
+// Training Plans
+export interface TrainingPlan {
+  id: number;
+  trainer_id: number;
+  athlete_id: number;
+  title: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  workouts?: PlannedWorkout[];
+  goals?: PlannedGoal[];
+  documents?: TrainingDocument[];
+  nutrition_plans?: NutritionPlan[];
+}
+
+export interface TrainingPlanSummary {
+  id: number;
+  trainer_id: number;
+  athlete_id: number;
+  title: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TrainingPlanCreate {
+  athlete_id: number;
+  title: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface PlannedWorkout {
+  id: number;
+  training_plan_id: number;
+  title: string;
+  workout_type: string;
+  scheduled_date: string;
+  duration_minutes?: number;
+  description?: string;
+  intensity?: string;
+  exercises?: string;  // JSON string
+  is_completed: boolean;
+  completed_at?: string;
+}
+
+export interface PlannedWorkoutCreate {
+  training_plan_id: number;
+  title: string;
+  workout_type: string;
+  scheduled_date: string;
+  duration_minutes?: number;
+  description?: string;
+  intensity?: string;
+  exercises?: string;
+}
+
+export interface PlannedGoal {
+  id: number;
+  training_plan_id: number;
+  title: string;
+  goal_type: string;
+  description?: string;
+  target_value?: number;
+  current_value?: number;
+  unit?: string;
+  target_date?: string;
+  is_achieved: boolean;
+}
+
+export interface PlannedGoalCreate {
+  training_plan_id: number;
+  title: string;
+  goal_type: string;
+  description?: string;
+  target_value?: number;
+  current_value?: number;
+  unit?: string;
+  target_date?: string;
+}
+
+export interface TrainingDocument {
+  id: number;
+  training_plan_id: number;
+  filename: string;
+  file_path: string;
+  file_type: string;
+  uploaded_at: string;
+  description?: string;
+}
+
+export interface NutritionPlan {
+  id: number;
+  training_plan_id: number;
+  day_of_week?: string;
+  meal_type: string;
+  description?: string;
+  calories?: number;
+  protein_grams?: number;
+  carbs_grams?: number;
+  fat_grams?: number;
+  notes?: string;
+}
+
+export interface NutritionPlanCreate {
+  training_plan_id: number;
+  day_of_week?: string;
+  meal_type: string;
+  description?: string;
+  calories?: number;
+  protein_grams?: number;
+  carbs_grams?: number;
+  fat_grams?: number;
+  notes?: string;
+}
+
+// Admin
+export interface SystemStats {
+  total_users: number;
+  total_athletes: number;
+  total_trainers: number;
+  total_admins: number;
+  total_active_assignments: number;
+  total_training_plans: number;
+  total_rides: number;
+  total_workouts: number;
+  total_goals: number;
 }
