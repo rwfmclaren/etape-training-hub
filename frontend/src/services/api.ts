@@ -7,8 +7,10 @@ import type {
   Ride,
   RideCreate,
   Workout,
+  WorkoutCreate,
   NutritionLog,
   Goal,
+  GoalCreate,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -77,6 +79,11 @@ export const workoutsAPI = {
     const response = await api.get<Workout[]>('/workouts/');
     return response.data;
   },
+
+  create: async (data: WorkoutCreate): Promise<Workout> => {
+    const response = await api.post<Workout>('/workouts/', data);
+    return response.data;
+  },
 };
 
 export const nutritionAPI = {
@@ -89,6 +96,11 @@ export const nutritionAPI = {
 export const goalsAPI = {
   getAll: async (): Promise<Goal[]> => {
     const response = await api.get<Goal[]>('/goals/');
+    return response.data;
+  },
+
+  create: async (data: GoalCreate): Promise<Goal> => {
+    const response = await api.post<Goal>('/goals/', data);
     return response.data;
   },
 };

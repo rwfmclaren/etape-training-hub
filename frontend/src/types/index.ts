@@ -106,3 +106,23 @@ export interface Goal {
   created_at: string;
   updated_at: string;
 }
+
+export interface WorkoutCreate {
+  title: string;
+  workout_type: string;
+  duration_minutes: number;
+  workout_date: string;
+  description?: string;
+  intensity?: string;
+  notes?: string;
+}
+
+export interface GoalCreate {
+  title: string;
+  goal_type: string;
+  description?: string;
+  target_value?: number;
+  current_value?: number;
+  unit?: string;
+  target_date?: string;
+}
