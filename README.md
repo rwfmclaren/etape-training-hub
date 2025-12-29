@@ -5,10 +5,14 @@ A full-stack web application for tracking cycling training data, nutrition, work
 ## Features
 
 - **User Authentication**: Secure login and registration with JWT tokens
+- **Role-Based Access Control (RBAC)**: Three user types (athlete, trainer, admin) with granular permissions
+- **Trainer-Athlete Relationships**: Athletes can request trainers, trainers approve/manage relationships
+- **Training Plans**: Trainers create comprehensive plans with workouts, goals, nutrition, and document uploads
 - **Ride Tracking**: Log cycling rides with detailed metrics (distance, duration, speed, power, heart rate, cadence)
 - **Workout Management**: Track off-bike training activities
 - **Nutrition Logging**: Monitor daily nutrition and hydration
 - **Goal Setting**: Create and track training goals
+- **Admin Dashboard**: System-wide user management, role changes, account controls, statistics
 - **Dashboard**: Visual overview of training progress
 
 ## Tech Stack
@@ -171,6 +175,39 @@ npm run dev
 - `GET /api/v1/goals/{id}` - Get goal details
 - `PUT /api/v1/goals/{id}` - Update goal
 - `DELETE /api/v1/goals/{id}` - Delete goal
+
+### Trainer-Athlete Relationships
+- `POST /api/v1/trainer-requests/` - Send trainer request
+- `GET /api/v1/trainer-requests/` - Get trainer requests
+- `PUT /api/v1/trainer-requests/{id}/respond` - Approve/reject request
+- `GET /api/v1/trainer-requests/assignments` - Get assignments
+- `DELETE /api/v1/trainer-requests/assignments/{id}` - End assignment
+- `GET /api/v1/trainer-requests/trainers/search` - Search trainers
+- `GET /api/v1/trainer-requests/my-athletes` - Get trainer's athletes
+
+### Training Plans
+- `GET /api/v1/training-plans/` - List training plans
+- `POST /api/v1/training-plans/` - Create training plan (trainer only)
+- `GET /api/v1/training-plans/{id}` - Get plan details
+- `PUT /api/v1/training-plans/{id}` - Update plan
+- `DELETE /api/v1/training-plans/{id}` - Delete plan
+- `POST /api/v1/training-plans/{id}/workouts` - Add workout to plan
+- `POST /api/v1/training-plans/{id}/goals` - Add goal to plan
+- `POST /api/v1/training-plans/{id}/nutrition` - Add nutrition plan
+- `POST /api/v1/training-plans/{id}/documents` - Upload document
+- `GET /api/v1/training-plans/{id}/documents/{doc_id}` - Download document
+- `DELETE /api/v1/training-plans/{id}/documents/{doc_id}` - Delete document
+
+### Admin
+- `GET /api/v1/admin/users` - List all users
+- `GET /api/v1/admin/users/{id}` - Get user details
+- `PUT /api/v1/admin/users/{id}/role` - Change user role
+- `PUT /api/v1/admin/users/{id}/lock` - Lock/unlock account
+- `DELETE /api/v1/admin/users/{id}` - Delete user
+- `GET /api/v1/admin/assignments` - View all assignments
+- `POST /api/v1/admin/assignments` - Create assignment manually
+- `DELETE /api/v1/admin/assignments/{id}` - End assignment
+- `GET /api/v1/admin/stats` - Get system statistics
 
 ## Azure Deployment
 
