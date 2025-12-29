@@ -76,18 +76,31 @@ Railway will automatically deploy when you push to GitHub. Get the backend URL f
 
 ### 2. Configure Frontend Environment Variables
 
-Add this environment variable to the frontend service:
+Add this **build-time** environment variable to the frontend service:
 
 ```bash
-# Point to your backend service URL
+# Point to your backend service URL (used during build)
 VITE_API_BASE_URL=https://your-backend-domain.up.railway.app
 ```
 
-**IMPORTANT**: Use the exact backend URL from Railway (without trailing slash).
+**IMPORTANT**:
+- Use the exact backend URL from Railway (without trailing slash)
+- This variable is used during the Docker build process and gets baked into the JavaScript bundle
+- After setting this variable, Railway will automatically trigger a rebuild
+- Make sure to deploy the backend first to get its URL
+
+**Alternative**: You can also set this as a Docker build argument in Railway:
+1. Go to Service Settings → Variables
+2. Add `VITE_API_BASE_URL` with your backend URL
+3. Railway automatically passes this to the Docker build
 
 ### 3. Deploy Frontend
 
-Railway will automatically deploy. The frontend will be available at the URL shown in Railway dashboard.
+Railway will automatically deploy when you:
+- Push changes to GitHub
+- Change environment variables (triggers rebuild)
+
+The frontend will be available at the URL shown in Railway dashboard.
 
 ## Networking
 
