@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 
 from app.db.base import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.user import UserCreate, User as UserSchema, Token
 from app.core.security import (
     verify_password,
@@ -53,6 +53,7 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
         email=user_in.email,
         hashed_password=hashed_password,
         full_name=user_in.full_name,
+        role=UserRole.ATHLETE,  # Default role for new users
     )
     db.add(user)
     db.commit()

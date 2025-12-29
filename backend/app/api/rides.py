@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.ride import Ride
 from app.schemas.ride import Ride as RideSchema, RideCreate, RideUpdate
 from app.api.auth import get_current_user
+from app.api.deps import get_accessible_user_ids
 
 router = APIRouter()
 
@@ -18,13 +19,13 @@ def get_rides(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    rides = (
-        db.query(Ride)
-        .filter(Ride.user_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    accessible_ids = get_accessible_user_ids(current_user, db)
+
+    query = db.query(Ride)
+    if accessible_ids is not None:  # Not admin
+        query = query.filter(Ride.user_id.in_(accessible_ids))
+
+    rides = query.offset(skip).limit(limit).all()
     return rides
 
 
@@ -47,7 +48,13 @@ def get_ride(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    ride = db.query(Ride).filter(Ride.id == ride_id, Ride.user_id == current_user.id).first()
+    accessible_ids = get_accessible_user_ids(current_user, db)
+
+    query = db.query(Ride).filter(Ride.id == ride_id)
+    if accessible_ids is not None:  # Not admin
+        query = query.filter(Ride.user_id.in_(accessible_ids))
+
+    ride = query.first()
     if not ride:
         raise HTTPException(status_code=404, detail="Ride not found")
     return ride

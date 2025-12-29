@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.workout import Workout
 from app.schemas.workout import Workout as WorkoutSchema, WorkoutCreate, WorkoutUpdate
 from app.api.auth import get_current_user
+from app.api.deps import get_accessible_user_ids
 
 router = APIRouter()
 
@@ -18,13 +19,13 @@ def get_workouts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    workouts = (
-        db.query(Workout)
-        .filter(Workout.user_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    accessible_ids = get_accessible_user_ids(current_user, db)
+
+    query = db.query(Workout)
+    if accessible_ids is not None:  # Not admin
+        query = query.filter(Workout.user_id.in_(accessible_ids))
+
+    workouts = query.offset(skip).limit(limit).all()
     return workouts
 
 
@@ -47,7 +48,13 @@ def get_workout(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    workout = db.query(Workout).filter(Workout.id == workout_id, Workout.user_id == current_user.id).first()
+    accessible_ids = get_accessible_user_ids(current_user, db)
+
+    query = db.query(Workout).filter(Workout.id == workout_id)
+    if accessible_ids is not None:  # Not admin
+        query = query.filter(Workout.user_id.in_(accessible_ids))
+
+    workout = query.first()
     if not workout:
         raise HTTPException(status_code=404, detail="Workout not found")
     return workout

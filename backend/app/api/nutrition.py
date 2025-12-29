@@ -7,6 +7,7 @@ from app.models.user import User
 from app.models.nutrition import NutritionLog
 from app.schemas.nutrition import NutritionLog as NutritionLogSchema, NutritionLogCreate, NutritionLogUpdate
 from app.api.auth import get_current_user
+from app.api.deps import get_accessible_user_ids
 
 router = APIRouter()
 
@@ -18,13 +19,13 @@ def get_nutrition_logs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    logs = (
-        db.query(NutritionLog)
-        .filter(NutritionLog.user_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    accessible_ids = get_accessible_user_ids(current_user, db)
+
+    query = db.query(NutritionLog)
+    if accessible_ids is not None:  # Not admin
+        query = query.filter(NutritionLog.user_id.in_(accessible_ids))
+
+    logs = query.offset(skip).limit(limit).all()
     return logs
 
 
@@ -47,7 +48,13 @@ def get_nutrition_log(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    log = db.query(NutritionLog).filter(NutritionLog.id == log_id, NutritionLog.user_id == current_user.id).first()
+    accessible_ids = get_accessible_user_ids(current_user, db)
+
+    query = db.query(NutritionLog).filter(NutritionLog.id == log_id)
+    if accessible_ids is not None:  # Not admin
+        query = query.filter(NutritionLog.user_id.in_(accessible_ids))
+
+    log = query.first()
     if not log:
         raise HTTPException(status_code=404, detail="Nutrition log not found")
     return log
