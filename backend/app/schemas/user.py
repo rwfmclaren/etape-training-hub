@@ -13,6 +13,11 @@ class UserCreate(UserBase):
     password: str
 
 
+class UserCreateWithInvite(UserBase):
+    password: str
+    invite_token: Optional[str] = None
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

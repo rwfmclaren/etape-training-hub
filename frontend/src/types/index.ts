@@ -4,6 +4,7 @@ export interface User {
   id: number;
   email: string;
   full_name?: string;
+  invite_token?: string;
   is_active: boolean;
   role: UserRole;
   is_locked: boolean;
@@ -20,6 +21,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   full_name?: string;
+  invite_token?: string;
 }
 
 export interface TokenResponse {
@@ -290,4 +292,48 @@ export interface SystemStats {
   total_rides: number;
   total_workouts: number;
   total_goals: number;
+}
+
+// Invite Tokens
+export interface InviteToken {
+  id: number;
+  token: string;
+  email?: string;
+  role: UserRole;
+  created_by_id: number;
+  created_at: string;
+  expires_at: string;
+  used_at?: string;
+  used_by_id?: number;
+  is_active: boolean;
+  is_valid: boolean;
+}
+
+export interface InviteTokenCreate {
+  email?: string;
+  role: UserRole;
+  expires_in_days?: number;
+}
+
+export interface InviteTokenPublic {
+  token: string;
+  role: UserRole;
+  email?: string;
+  expires_at: string;
+  is_valid: boolean;
+}
+
+export interface RegisterWithInviteRequest {
+  email: string;
+  password: string;
+  full_name?: string;
+  invite_token?: string;
+  invite_token?: string;
+}
+
+export interface UserCreateRequest {
+  email: string;
+  password: string;
+  full_name?: string;
+  invite_token?: string;
 }

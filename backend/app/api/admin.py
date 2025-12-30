@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List
+from datetime import datetime, timedelta
 
 from app.db.base import get_db
 from app.models.user import User, UserRole
@@ -10,13 +11,16 @@ from app.models.training_plan import TrainingPlan
 from app.models.ride import Ride
 from app.models.workout import Workout
 from app.models.goal import Goal
-from app.schemas.user import User as UserSchema
+from app.models.invite_token import InviteToken
+from app.schemas.user import User as UserSchema, UserCreate
 from app.schemas.admin import UserRoleUpdate, UserLockUpdate, SystemStats
 from app.schemas.trainer_athlete import (
     TrainerAssignment as TrainerAssignmentSchema,
     TrainerAssignmentCreate,
 )
+from app.schemas.invite_token import InviteTokenCreate, InviteTokenResponse
 from app.api.deps import get_admin
+from app.core.security import get_password_hash
 
 router = APIRouter()
 
@@ -29,17 +33,13 @@ def get_all_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """Get all users (admin only)"""
     query = db.query(User)
-
-    # Filter by role if specified
     if role:
         try:
             role_enum = UserRole(role)
             query = query.filter(User.role == role_enum)
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid role")
-
     users = query.offset(skip).limit(limit).all()
     return users
 
@@ -50,10 +50,32 @@ def get_user_by_id(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """Get user details by ID (admin only)"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.post("/users", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+def create_user(
+    user_data: UserCreate,
+    role: UserRole = UserRole.ATHLETE,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin),
+):
+    existing = db.query(User).filter(User.email == user_data.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    hashed_password = get_password_hash(user_data.password)
+    user = User(
+        email=user_data.email,
+        hashed_password=hashed_password,
+        full_name=user_data.full_name,
+        role=role,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return user
 
 
@@ -64,14 +86,10 @@ def change_user_role(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """Change a user's role (admin only)"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    # Warn if admin is demoting themselves
     if user_id == current_user.id and role_data.role != UserRole.ADMIN:
-        # Check if there are other admins
         other_admins = db.query(User).filter(
             User.role == UserRole.ADMIN,
             User.id != current_user.id,
@@ -81,9 +99,8 @@ def change_user_role(
         if other_admins == 0:
             raise HTTPException(
                 status_code=400,
-                detail="Cannot demote yourself - you are the only active admin. Promote another user to admin first."
+                detail="Cannot demote yourself - you are the only active admin."
             )
-
     user.role = role_data.role
     db.commit()
     db.refresh(user)
@@ -97,18 +114,11 @@ def lock_unlock_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """Lock or unlock a user account (admin only)"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    # Prevent admin from locking themselves
     if user_id == current_user.id and lock_data.locked:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot lock your own account"
-        )
-
+        raise HTTPException(status_code=400, detail="Cannot lock your own account")
     user.is_locked = lock_data.locked
     db.commit()
     db.refresh(user)
@@ -121,19 +131,11 @@ def delete_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """Delete a user account (admin only) - WARNING: This is permanent"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    # Prevent admin from deleting themselves
     if user_id == current_user.id:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot delete your own account"
-        )
-
-    # Check if last admin
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
     if user.role == UserRole.ADMIN:
         other_admins = db.query(User).filter(
             User.role == UserRole.ADMIN,
@@ -141,12 +143,61 @@ def delete_user(
             User.is_active == True
         ).count()
         if other_admins == 0:
-            raise HTTPException(
-                status_code=400,
-                detail="Cannot delete the last admin account"
-            )
-
+            raise HTTPException(status_code=400, detail="Cannot delete the last admin")
     db.delete(user)
+    db.commit()
+    return None
+
+
+@router.post("/invites", response_model=InviteTokenResponse, status_code=status.HTTP_201_CREATED)
+def create_invite(
+    invite_data: InviteTokenCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin),
+):
+    expires_at = datetime.utcnow() + timedelta(days=invite_data.expires_in_days)
+    invite = InviteToken(
+        token=InviteToken.generate_token(),
+        email=invite_data.email,
+        role=invite_data.role,
+        created_by_id=current_user.id,
+        expires_at=expires_at,
+    )
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+    return invite
+
+
+@router.get("/invites", response_model=List[InviteTokenResponse])
+def get_invites(
+    skip: int = 0,
+    limit: int = 100,
+    active_only: bool = False,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin),
+):
+    query = db.query(InviteToken)
+    if active_only:
+        query = query.filter(
+            InviteToken.is_active == True,
+            InviteToken.used_at == None,
+            InviteToken.expires_at > datetime.utcnow()
+        )
+    invites = query.order_by(InviteToken.created_at.desc()).offset(skip).limit(limit).all()
+    return invites
+
+
+@router.delete("/invites/{invite_id}", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_invite(
+    invite_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin),
+):
+    invite = db.query(InviteToken).filter(InviteToken.id == invite_id).first()
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    invite.is_active = False
     db.commit()
     return None
 
@@ -159,12 +210,9 @@ def get_all_assignments(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """Get all trainer-athlete assignments (admin only)"""
     query = db.query(TrainerAthleteAssignment)
-
     if active_only:
         query = query.filter(TrainerAthleteAssignment.is_active == True)
-
     assignments = query.offset(skip).limit(limit).all()
     return assignments
 
@@ -175,20 +223,14 @@ def create_assignment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """Manually create a trainer-athlete assignment (admin only)"""
-    # Verify trainer exists and has trainer role
     trainer = db.query(User).filter(User.id == assignment_data.trainer_id).first()
     if not trainer:
         raise HTTPException(status_code=404, detail="Trainer not found")
     if trainer.role not in [UserRole.TRAINER, UserRole.ADMIN]:
         raise HTTPException(status_code=400, detail="User is not a trainer")
-
-    # Verify athlete exists
     athlete = db.query(User).filter(User.id == assignment_data.athlete_id).first()
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
-
-    # Check if assignment already exists
     existing = db.query(TrainerAthleteAssignment).filter(
         TrainerAthleteAssignment.trainer_id == assignment_data.trainer_id,
         TrainerAthleteAssignment.athlete_id == assignment_data.athlete_id,
@@ -196,8 +238,6 @@ def create_assignment(
     ).first()
     if existing:
         raise HTTPException(status_code=400, detail="Active assignment already exists")
-
-    # Create assignment
     assignment = TrainerAthleteAssignment(
         trainer_id=assignment_data.trainer_id,
         athlete_id=assignment_data.athlete_id,
@@ -216,13 +256,11 @@ def delete_assignment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """End a trainer-athlete assignment (admin only)"""
     assignment = db.query(TrainerAthleteAssignment).filter(
         TrainerAthleteAssignment.id == assignment_id
     ).first()
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
-
     assignment.is_active = False
     db.commit()
     return None
@@ -233,7 +271,6 @@ def get_system_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin),
 ):
-    """Get system-wide statistics (admin only)"""
     total_users = db.query(func.count(User.id)).scalar()
     total_athletes = db.query(func.count(User.id)).filter(User.role == UserRole.ATHLETE).scalar()
     total_trainers = db.query(func.count(User.id)).filter(User.role == UserRole.TRAINER).scalar()
@@ -245,7 +282,6 @@ def get_system_stats(
     total_rides = db.query(func.count(Ride.id)).scalar()
     total_workouts = db.query(func.count(Workout.id)).scalar()
     total_goals = db.query(func.count(Goal.id)).scalar()
-
     return SystemStats(
         total_users=total_users,
         total_athletes=total_athletes,

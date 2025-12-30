@@ -5,3 +5,4 @@ from .nutrition import NutritionLog
 from .goal import Goal
 from .trainer_athlete import TrainerAthleteRequest, TrainerAthleteAssignment
 from .training_plan import TrainingPlan, PlannedWorkout, PlannedGoal, TrainingDocument, NutritionPlan
+from .invite_token import InviteToken

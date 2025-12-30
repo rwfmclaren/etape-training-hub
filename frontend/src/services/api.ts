@@ -2,6 +2,7 @@ import axios from 'axios';
 import type {
   LoginRequest,
   RegisterRequest,
+  RegisterWithInviteRequest,
   TokenResponse,
   User,
   Ride,
@@ -23,6 +24,10 @@ import type {
   TrainingDocument,
   SystemStats,
   UserRole,
+  InviteToken,
+  InviteTokenCreate,
+  InviteTokenPublic,
+  UserCreateRequest,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -49,13 +54,18 @@ export const authAPI = {
     return response.data;
   },
 
-  register: async (data: RegisterRequest): Promise<User> => {
+  register: async (data: RegisterRequest | RegisterWithInviteRequest): Promise<User> => {
     const response = await api.post<User>('/auth/register', data);
     return response.data;
   },
 
   getCurrentUser: async (): Promise<User> => {
     const response = await api.get<User>('/auth/me');
+    return response.data;
+  },
+
+  validateInviteToken: async (token: string): Promise<InviteTokenPublic> => {
+    const response = await api.get<InviteTokenPublic>(`/auth/invite/${token}`);
     return response.data;
   },
 };
@@ -250,6 +260,11 @@ export const adminAPI = {
     return response.data;
   },
 
+  createUser: async (data: UserCreateRequest, role: UserRole = 'athlete'): Promise<User> => {
+    const response = await api.post<User>('/admin/users', data, { params: { role } });
+    return response.data;
+  },
+
   changeUserRole: async (userId: number, role: UserRole): Promise<User> => {
     const response = await api.put<User>(`/admin/users/${userId}/role`, { role });
     return response.data;
@@ -262,6 +277,20 @@ export const adminAPI = {
 
   deleteUser: async (userId: number): Promise<void> => {
     await api.delete(`/admin/users/${userId}`);
+  },
+
+  createInvite: async (data: InviteTokenCreate): Promise<InviteToken> => {
+    const response = await api.post<InviteToken>('/admin/invites', data);
+    return response.data;
+  },
+
+  getInvites: async (activeOnly: boolean = false): Promise<InviteToken[]> => {
+    const response = await api.get<InviteToken[]>('/admin/invites', { params: { active_only: activeOnly } });
+    return response.data;
+  },
+
+  revokeInvite: async (inviteId: number): Promise<void> => {
+    await api.delete(`/admin/invites/${inviteId}`);
   },
 
   getAssignments: async (activeOnly: boolean = true): Promise<TrainerAssignment[]> => {
