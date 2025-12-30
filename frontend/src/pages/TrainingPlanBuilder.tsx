@@ -114,12 +114,12 @@ export default function TrainingPlanBuilder() {
         </div>
         <div className="w-16 h-0.5 bg-gray-200 mx-2" />
         <div className={"flex items-center " + (step === 'preview' ? 'text-primary-600' : 'text-gray-400')}>
-          <div className={"w-8 h-8 rounded-full flex items-center justify-center font-bold " + (step === 'preview' ? 'bg-primary-600 text-white' : 'bg-gray-200')}>2</span>
+          <div className={"w-8 h-8 rounded-full flex items-center justify-center font-bold " + (step === 'preview' ? 'bg-primary-600 text-white' : 'bg-gray-200')}>2</div>
           <span className="ml-2 font-medium">Preview</span>
         </div>
         <div className="w-16 h-0.5 bg-gray-200 mx-2" />
         <div className={"flex items-center " + (step === 'assign' ? 'text-primary-600' : 'text-gray-400')}>
-          <div className={"w-8 h-8 rounded-full flex items-center justify-center font-bold " + (step === 'assign' ? 'bg-primary-600 text-white' : 'bg-gray-200')}>3</span>
+          <div className={"w-8 h-8 rounded-full flex items-center justify-center font-bold " + (step === 'assign' ? 'bg-primary-600 text-white' : 'bg-gray-200')}>3</div>
           <span className="ml-2 font-medium">Assign</span>
         </div>
       </div>
