@@ -39,6 +39,23 @@ export default function TrainingPlans() {
 
   if (loading) return <Layout><Loading text="Loading training plans..." /></Layout>;
 
+  const getEmptyDescription = () => {
+    if (filter === 'all') return "Create your first training plan to get started.";
+    return "No " + filter + " training plans found.";
+  };
+
+  const formatDateRange = (plan: TrainingPlanSummary) => {
+    if (!plan.start_date) return "No dates set";
+    const start = new Date(plan.start_date).toLocaleDateString();
+    if (!plan.end_date) return start;
+    return start + " - " + new Date(plan.end_date).toLocaleDateString();
+  };
+
+  const getStatusClass = (isActive: boolean) => {
+    return isActive
+      ? 'bg-green-100 text-green-800'
+      : 'bg-gray-100 text-gray-600';
+  };
   return (
     <Layout>
       {/* Header */}
@@ -85,11 +102,7 @@ export default function TrainingPlans() {
         <EmptyState
           icon={HiDocumentText}
           title="No training plans found"
-          description={
-            filter === 'all'
-              ? "Create your first training plan to get started."
-              : \`No \${filter} training plans found.\`
-          }
+          description={getEmptyDescription()}
           action={
             filter === 'all' ? (
               <div className="mt-6">
@@ -103,7 +116,7 @@ export default function TrainingPlans() {
       ) : (
         <div className="grid gap-4">
           {filteredPlans.map((plan) => (
-            <Link key={plan.id} to={\`/training-plans/\${plan.id}\`}>
+            <Link key={plan.id} to={"/training-plans/" + plan.id}>
               <Card hover className="transition-all duration-200">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -117,24 +130,11 @@ export default function TrainingPlans() {
                     )}
                     <div className="flex items-center text-sm text-gray-500">
                       <HiCalendar className="w-4 h-4 mr-1" />
-                      {plan.start_date ? (
-                        <span>
-                          {new Date(plan.start_date).toLocaleDateString()}
-                          {plan.end_date && \` - \${new Date(plan.end_date).toLocaleDateString()}\`}
-                        </span>
-                      ) : (
-                        <span>No dates set</span>
-                      )}
+                      <span>{formatDateRange(plan)}</span>
                     </div>
                   </div>
                   <div className="ml-4">
-                    <span
-                      className={\`px-3 py-1 rounded-full text-sm font-medium \${
-                        plan.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-600'
-                      }\`}
-                    >
+                    <span className={"px-3 py-1 rounded-full text-sm font-medium " + getStatusClass(plan.is_active)}>
                       {plan.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
