@@ -7,7 +7,7 @@ import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
 import { BiCycling } from 'react-icons/bi';
 import { GiWeightLiftingUp } from 'react-icons/gi';
-import { HiOutlineFlag, HiDocumentText, HiArrowLeft, HiClock } from 'react-icons/hi';
+import { HiOutlineFlag, HiArrowLeft } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 interface AthleteStats {

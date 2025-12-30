@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { trainerAthleteAPI, trainingPlansAPI, trainerDashboardAPI } from '../services/api';
-import type { User, TrainerRequest, TrainingPlanSummary } from '../types';
+import type { TrainerRequest, TrainingPlanSummary } from '../types';
 import Layout from '../components/Layout';
 import Card, { StatCard } from '../components/ui/Card';
 import Button from '../components/ui/Button';
