@@ -206,3 +206,256 @@ def get_my_athletes(
     # Get athlete user objects
     athletes = db.query(User).filter(User.id.in_(athlete_ids)).all()
     return athletes
+
+
+@router.get("/athletes/{athlete_id}/stats")
+def get_athlete_stats(
+    athlete_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_trainer),
+):
+    """Get detailed stats for an athlete (trainers only)"""
+    from app.models.ride import Ride
+    from app.models.workout import Workout
+    from app.models.goal import Goal
+    from app.models.training_plan import TrainingPlan, PlannedWorkout
+    from datetime import timedelta
+    from sqlalchemy import func
+    
+    # Verify assignment
+    if current_user.role != UserRole.ADMIN:
+        assignment = db.query(TrainerAthleteAssignment).filter(
+            TrainerAthleteAssignment.trainer_id == current_user.id,
+            TrainerAthleteAssignment.athlete_id == athlete_id,
+            TrainerAthleteAssignment.is_active == True
+        ).first()
+        if not assignment:
+            raise HTTPException(status_code=403, detail="Not authorized to view this athlete")
+    
+    # Get athlete info
+    athlete = db.query(User).filter(User.id == athlete_id).first()
+    if not athlete:
+        raise HTTPException(status_code=404, detail="Athlete not found")
+    
+    now = datetime.utcnow()
+    week_ago = now - timedelta(days=7)
+    
+    # Rides stats
+    total_rides = db.query(Ride).filter(Ride.user_id == athlete_id).count()
+    recent_rides = db.query(Ride).filter(
+        Ride.user_id == athlete_id,
+        Ride.ride_date >= week_ago
+    ).count()
+    total_distance = db.query(func.sum(Ride.distance_km)).filter(
+        Ride.user_id == athlete_id
+    ).scalar() or 0
+    
+    # Workouts stats
+    total_workouts = db.query(Workout).filter(Workout.user_id == athlete_id).count()
+    recent_workouts = db.query(Workout).filter(
+        Workout.user_id == athlete_id,
+        Workout.workout_date >= week_ago
+    ).count()
+    
+    # Goals stats
+    total_goals = db.query(Goal).filter(Goal.user_id == athlete_id).count()
+    completed_goals = db.query(Goal).filter(
+        Goal.user_id == athlete_id,
+        Goal.is_completed == True
+    ).count()
+    
+    # Training plan compliance
+    active_plans = db.query(TrainingPlan).filter(
+        TrainingPlan.athlete_id == athlete_id,
+        TrainingPlan.is_active == True
+    ).all()
+    
+    total_planned = 0
+    completed_planned = 0
+    for plan in active_plans:
+        workouts = db.query(PlannedWorkout).filter(
+            PlannedWorkout.training_plan_id == plan.id,
+            PlannedWorkout.scheduled_date <= now
+        ).all()
+        total_planned += len(workouts)
+        completed_planned += sum(1 for w in workouts if w.is_completed)
+    
+    compliance_rate = (completed_planned / total_planned * 100) if total_planned > 0 else 0
+    
+    # Last activity
+    last_ride = db.query(Ride).filter(Ride.user_id == athlete_id).order_by(Ride.ride_date.desc()).first()
+    last_workout = db.query(Workout).filter(Workout.user_id == athlete_id).order_by(Workout.workout_date.desc()).first()
+    
+    last_activity = None
+    if last_ride and last_workout:
+        last_activity = max(last_ride.ride_date, last_workout.workout_date).isoformat()
+    elif last_ride:
+        last_activity = last_ride.ride_date.isoformat()
+    elif last_workout:
+        last_activity = last_workout.workout_date.isoformat()
+    
+    return {
+        "athlete": {
+            "id": athlete.id,
+            "email": athlete.email,
+            "full_name": athlete.full_name,
+            "created_at": athlete.created_at.isoformat() if athlete.created_at else None
+        },
+        "rides": {
+            "total": total_rides,
+            "this_week": recent_rides,
+            "total_distance_km": round(total_distance, 1)
+        },
+        "workouts": {
+            "total": total_workouts,
+            "this_week": recent_workouts
+        },
+        "goals": {
+            "total": total_goals,
+            "completed": completed_goals
+        },
+        "training_plans": {
+            "active_count": len(active_plans),
+            "compliance_rate": round(compliance_rate, 1),
+            "planned_workouts": total_planned,
+            "completed_workouts": completed_planned
+        },
+        "last_activity": last_activity
+    }
+
+@router.get("/athletes/{athlete_id}/activity")
+def get_athlete_activity(
+    athlete_id: int,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_trainer),
+):
+    """Get recent activity feed for an athlete"""
+    from app.models.ride import Ride
+    from app.models.workout import Workout
+    
+    if current_user.role != UserRole.ADMIN:
+        assignment = db.query(TrainerAthleteAssignment).filter(
+            TrainerAthleteAssignment.trainer_id == current_user.id,
+            TrainerAthleteAssignment.athlete_id == athlete_id,
+            TrainerAthleteAssignment.is_active == True
+        ).first()
+        if not assignment:
+            raise HTTPException(status_code=403, detail="Not authorized")
+    
+    rides = db.query(Ride).filter(Ride.user_id == athlete_id).order_by(Ride.ride_date.desc()).limit(limit).all()
+    workouts = db.query(Workout).filter(Workout.user_id == athlete_id).order_by(Workout.workout_date.desc()).limit(limit).all()
+    
+    activity = []
+    for ride in rides:
+        activity.append({
+            "type": "ride",
+            "id": ride.id,
+            "title": ride.title,
+            "date": ride.ride_date.isoformat() if ride.ride_date else None,
+            "details": {"distance_km": ride.distance_km, "duration_minutes": ride.duration_minutes}
+        })
+    for workout in workouts:
+        activity.append({
+            "type": "workout",
+            "id": workout.id,
+            "title": workout.title,
+            "date": workout.workout_date.isoformat() if workout.workout_date else None,
+            "details": {"workout_type": workout.workout_type, "duration_minutes": workout.duration_minutes}
+        })
+    
+    activity.sort(key=lambda x: x["date"] or "", reverse=True)
+    return activity[:limit]
+
+
+@router.get("/athletes/{athlete_id}/plans")
+def get_athlete_training_plans(
+    athlete_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_trainer),
+):
+    """Get training plans for an athlete"""
+    from app.models.training_plan import TrainingPlan
+    
+    if current_user.role != UserRole.ADMIN:
+        assignment = db.query(TrainerAthleteAssignment).filter(
+            TrainerAthleteAssignment.trainer_id == current_user.id,
+            TrainerAthleteAssignment.athlete_id == athlete_id,
+            TrainerAthleteAssignment.is_active == True
+        ).first()
+        if not assignment:
+            raise HTTPException(status_code=403, detail="Not authorized")
+    
+    plans = db.query(TrainingPlan).filter(TrainingPlan.athlete_id == athlete_id).order_by(TrainingPlan.created_at.desc()).all()
+    return [{
+        "id": p.id, "title": p.title, "description": p.description,
+        "start_date": p.start_date.isoformat() if p.start_date else None,
+        "end_date": p.end_date.isoformat() if p.end_date else None,
+        "is_active": p.is_active
+    } for p in plans]
+
+
+@router.get("/dashboard-stats")
+def get_trainer_dashboard_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_trainer),
+):
+    """Get summary stats for trainer dashboard"""
+    from app.models.training_plan import TrainingPlan, PlannedWorkout
+    from app.models.ride import Ride
+    from app.models.workout import Workout
+    from datetime import timedelta
+    
+    athlete_ids = [a[0] for a in db.query(TrainerAthleteAssignment.athlete_id).filter(
+        TrainerAthleteAssignment.trainer_id == current_user.id,
+        TrainerAthleteAssignment.is_active == True
+    ).all()]
+    
+    active_plans = db.query(TrainingPlan).filter(
+        TrainingPlan.trainer_id == current_user.id, TrainingPlan.is_active == True
+    ).count()
+    
+    now = datetime.utcnow()
+    week_ago = now - timedelta(days=7)
+    
+    attention_list = []
+    athlete_summaries = []
+    
+    for aid in athlete_ids:
+        athlete = db.query(User).filter(User.id == aid).first()
+        if not athlete: continue
+        
+        last_ride = db.query(Ride).filter(Ride.user_id == aid).order_by(Ride.ride_date.desc()).first()
+        last_workout = db.query(Workout).filter(Workout.user_id == aid).order_by(Workout.workout_date.desc()).first()
+        
+        last_activity = None
+        if last_ride and last_workout:
+            last_activity = max(last_ride.ride_date, last_workout.workout_date)
+        elif last_ride: last_activity = last_ride.ride_date
+        elif last_workout: last_activity = last_workout.workout_date
+        
+        if not last_activity or last_activity < week_ago:
+            attention_list.append({"id": athlete.id, "full_name": athlete.full_name, "email": athlete.email})
+        
+        plans = db.query(TrainingPlan).filter(TrainingPlan.athlete_id == aid, TrainingPlan.is_active == True).all()
+        total_w, completed_w = 0, 0
+        for p in plans:
+            ws = db.query(PlannedWorkout).filter(PlannedWorkout.training_plan_id == p.id, PlannedWorkout.scheduled_date <= now).all()
+            total_w += len(ws)
+            completed_w += sum(1 for w in ws if w.is_completed)
+        
+        compliance = (completed_w / total_w * 100) if total_w > 0 else 0
+        athlete_summaries.append({
+            "id": athlete.id, "full_name": athlete.full_name, "email": athlete.email,
+            "compliance_rate": round(compliance, 1),
+            "last_activity": last_activity.isoformat() if last_activity else None,
+            "active_plans": len(plans)
+        })
+    
+    return {
+        "total_athletes": len(athlete_ids),
+        "active_plans": active_plans,
+        "athletes_needing_attention": len(attention_list),
+        "attention_list": attention_list,
+        "athlete_summaries": athlete_summaries
+    }

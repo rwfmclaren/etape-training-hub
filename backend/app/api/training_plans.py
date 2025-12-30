@@ -551,3 +551,138 @@ def delete_document(
     db.delete(document)
     db.commit()
     return None
+
+
+# AI PDF Parsing
+@router.post("/parse-pdf", status_code=status.HTTP_200_OK)
+async def parse_training_plan_pdf(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_trainer),
+):
+    """Parse a PDF training plan using AI and return structured data for preview"""
+    from app.core.claude_service import claude_service
+    
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    
+    # Read file content
+    content = await file.read()
+    
+    if len(content) > 10 * 1024 * 1024:  # 10MB limit
+        raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+    
+    # Parse with Claude AI
+    result = await claude_service.parse_training_plan_pdf(content, file.filename)
+    
+    if not result["success"]:
+        raise HTTPException(
+            status_code=500, 
+            detail=result.get("error", "Failed to parse PDF")
+        )
+    
+    return {
+        "success": True,
+        "parsed_data": result["data"]
+    }
+
+
+@router.post("/create-from-parsed", response_model=TrainingPlanSchema, status_code=status.HTTP_201_CREATED)
+def create_plan_from_parsed_data(
+    athlete_id: int,
+    parsed_data: dict,
+    start_date: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_trainer),
+):
+    """Create a training plan from AI-parsed data"""
+    from datetime import datetime, timedelta
+    
+    # Verify athlete
+    athlete = db.query(User).filter(User.id == athlete_id).first()
+    if not athlete:
+        raise HTTPException(status_code=404, detail="Athlete not found")
+    
+    # Verify assignment for non-admins
+    if current_user.role != UserRole.ADMIN:
+        assignment = db.query(TrainerAthleteAssignment).filter(
+            TrainerAthleteAssignment.trainer_id == current_user.id,
+            TrainerAthleteAssignment.athlete_id == athlete_id,
+            TrainerAthleteAssignment.is_active == True
+        ).first()
+        if not assignment:
+            raise HTTPException(
+                status_code=403,
+                detail="You must have an active assignment with this athlete"
+            )
+    
+    # Parse start date
+    plan_start = datetime.strptime(start_date, "%Y-%m-%d").date() if start_date else datetime.now().date()
+    
+    # Calculate end date based on duration
+    duration_weeks = parsed_data.get("duration_weeks", 12)
+    plan_end = plan_start + timedelta(weeks=duration_weeks)
+    
+    # Create the training plan
+    plan = TrainingPlan(
+        trainer_id=current_user.id,
+        athlete_id=athlete_id,
+        title=parsed_data.get("title", "Training Plan"),
+        description=parsed_data.get("description", ""),
+        start_date=plan_start,
+        end_date=plan_end,
+        is_active=True
+    )
+    db.add(plan)
+    db.commit()
+    db.refresh(plan)
+    
+    # Add workouts
+    workouts = parsed_data.get("workouts", [])
+    for workout_data in workouts:
+        week = workout_data.get("week", 1)
+        day = workout_data.get("day_of_week", 1)
+        scheduled_date = plan_start + timedelta(weeks=week-1, days=day-1)
+        
+        workout = PlannedWorkout(
+            training_plan_id=plan.id,
+            title=workout_data.get("title", "Workout"),
+            workout_type=workout_data.get("workout_type", "general"),
+            scheduled_date=scheduled_date,
+            duration_minutes=workout_data.get("duration_minutes"),
+            description=workout_data.get("description", ""),
+            intensity=workout_data.get("intensity", "medium"),
+            exercises=str(workout_data.get("exercises", [])),
+            is_completed=False
+        )
+        db.add(workout)
+    
+    # Add goals
+    goals = parsed_data.get("goals", [])
+    for goal_data in goals:
+        goal = PlannedGoal(
+            training_plan_id=plan.id,
+            title=goal_data.get("title", "Goal"),
+            goal_type=goal_data.get("goal_type", "performance"),
+            description=goal_data.get("description", ""),
+            target_value=goal_data.get("target_value"),
+            unit=goal_data.get("unit"),
+            target_date=plan_end,
+            is_achieved=False
+        )
+        db.add(goal)
+    
+    # Add nutrition guidance as nutrition plans
+    nutrition = parsed_data.get("nutrition_guidance", [])
+    for idx, nutr_data in enumerate(nutrition):
+        nutr_plan = NutritionPlan(
+            training_plan_id=plan.id,
+            day_of_week=idx % 7,
+            meal_type=nutr_data.get("category", "general"),
+            description=nutr_data.get("recommendation", ""),
+            notes=nutr_data.get("details", "")
+        )
+        db.add(nutr_plan)
+    
+    db.commit()
+    db.refresh(plan)
+    return plan

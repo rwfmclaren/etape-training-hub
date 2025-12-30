@@ -314,3 +314,89 @@ export const adminAPI = {
 };
 
 export default api;
+
+// AI Training Plan Builder
+export const aiPlanBuilderAPI = {
+  parsePDF: async (file: File): Promise<{ success: boolean; parsed_data: any }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/training-plans/parse-pdf', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  createFromParsed: async (
+    athleteId: number,
+    parsedData: any,
+    startDate?: string
+  ): Promise<TrainingPlan> => {
+    const response = await api.post('/training-plans/create-from-parsed', parsedData, {
+      params: { athlete_id: athleteId, start_date: startDate },
+    });
+    return response.data;
+  },
+};
+
+// Enhanced Trainer API
+export const trainerDashboardAPI = {
+  getStats: async (): Promise<{
+    total_athletes: number;
+    active_plans: number;
+    athletes_needing_attention: number;
+    attention_list: Array<{ id: number; full_name: string; email: string }>;
+    athlete_summaries: Array<{
+      id: number;
+      full_name: string;
+      email: string;
+      compliance_rate: number;
+      last_activity: string | null;
+      active_plans: number;
+    }>;
+  }> => {
+    const response = await api.get('/trainer-requests/dashboard-stats');
+    return response.data;
+  },
+
+  getAthleteStats: async (athleteId: number): Promise<{
+    athlete: { id: number; email: string; full_name: string; created_at: string };
+    rides: { total: number; this_week: number; total_distance_km: number };
+    workouts: { total: number; this_week: number };
+    goals: { total: number; completed: number };
+    training_plans: {
+      active_count: number;
+      compliance_rate: number;
+      planned_workouts: number;
+      completed_workouts: number;
+    };
+    last_activity: string | null;
+  }> => {
+    const response = await api.get(`/trainer-requests/athletes/${athleteId}/stats`);
+    return response.data;
+  },
+
+  getAthleteActivity: async (athleteId: number, limit?: number): Promise<Array<{
+    type: 'ride' | 'workout';
+    id: number;
+    title: string;
+    date: string;
+    details: any;
+  }>> => {
+    const response = await api.get(`/trainer-requests/athletes/${athleteId}/activity`, {
+      params: { limit },
+    });
+    return response.data;
+  },
+
+  getAthletePlans: async (athleteId: number): Promise<Array<{
+    id: number;
+    title: string;
+    description: string;
+    start_date: string | null;
+    end_date: string | null;
+    is_active: boolean;
+  }>> => {
+    const response = await api.get(`/trainer-requests/athletes/${athleteId}/plans`);
+    return response.data;
+  },
+};

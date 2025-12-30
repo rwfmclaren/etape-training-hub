@@ -13,6 +13,8 @@ import FindTrainer from './pages/FindTrainer';
 import MyRides from './pages/MyRides';
 import MyWorkouts from './pages/MyWorkouts';
 import MyGoals from './pages/MyGoals';
+import TrainingPlanBuilder from './pages/TrainingPlanBuilder';
+import AthleteDetailView from './pages/AthleteDetailView';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -123,6 +125,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AdminPanel />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/training-plans/builder"
+        element={
+          <ProtectedRoute>
+            <TrainingPlanBuilder />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trainer/athletes/:athleteId"
+        element={
+          <ProtectedRoute>
+            <AthleteDetailView />
           </ProtectedRoute>
         }
       />
