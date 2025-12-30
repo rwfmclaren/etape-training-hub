@@ -6,7 +6,7 @@ import type { Ride, Workout, Goal, RideCreate, WorkoutCreate, GoalCreate } from 
 import Layout from '../components/Layout';
 
 export default function Dashboard() {
-  const { user, isAthlete, isTrainer, isAdmin } = useAuth();
+  const { user, isTrainer, isAdmin } = useAuth();
   const [rides, setRides] = useState<Ride[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);

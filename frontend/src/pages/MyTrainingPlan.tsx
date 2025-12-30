@@ -4,7 +4,6 @@ import type { TrainingPlan } from '../types';
 import Layout from '../components/Layout';
 
 export default function MyTrainingPlan() {
-  const [plans, setPlans] = useState<TrainingPlan[]>([]);
   const [activePlan, setActivePlan] = useState<TrainingPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -17,7 +16,6 @@ export default function MyTrainingPlan() {
     try {
       setLoading(true);
       const data = await trainingPlansAPI.getAll();
-      setPlans(data);
 
       // Find the active plan or most recent one
       const active = data.find(p => p.is_active);

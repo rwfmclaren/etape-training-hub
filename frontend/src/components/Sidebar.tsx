@@ -5,12 +5,10 @@ import {
   HiUsers,
   HiClipboardList,
   HiUserGroup,
-  HiCog,
   HiChartBar,
   HiSearch,
   HiDocumentText,
-  HiTrendingUp,
-  HiTarget,
+  HiOutlineFlag,
   HiLogout,
   HiMenu,
   HiX
@@ -20,7 +18,7 @@ import { GiMuscleUp } from 'react-icons/gi';
 import { useState } from 'react';
 
 export default function Sidebar() {
-  const { user, logout, isAthlete, isTrainer, isAdmin } = useAuth();
+  const { user, logout, isTrainer, isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
@@ -36,7 +34,7 @@ export default function Sidebar() {
     { path: '/dashboard', icon: HiHome, label: 'Dashboard' },
     { path: '/my-rides', icon: BiCycling, label: 'My Rides' },
     { path: '/my-workouts', icon: GiMuscleUp, label: 'My Workouts' },
-    { path: '/my-goals', icon: HiTarget, label: 'My Goals' },
+    { path: '/my-goals', icon: HiOutlineFlag, label: 'My Goals' },
     { path: '/my-training-plan', icon: HiDocumentText, label: 'Training Plan' },
     { path: '/find-trainer', icon: HiSearch, label: 'Find Trainer' },
   ];
