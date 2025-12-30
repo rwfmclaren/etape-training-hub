@@ -328,7 +328,6 @@ export interface RegisterWithInviteRequest {
   password: string;
   full_name?: string;
   invite_token?: string;
-  invite_token?: string;
 }
 
 export interface UserCreateRequest {

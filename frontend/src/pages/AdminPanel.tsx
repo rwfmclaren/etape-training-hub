@@ -5,7 +5,7 @@ import Layout from '../components/Layout';
 import Card, { StatCard } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
-import { HiUsers, HiShieldCheck, HiLockClosed, HiLockOpen, HiTrash, HiPlus, HiLink, HiClipboard, HiX } from 'react-icons/hi';
+import { HiUsers, HiShieldCheck, HiPlus, HiLink, HiClipboard, HiX } from 'react-icons/hi';
 import { BiCycling } from 'react-icons/bi';
 import { GiWeightLiftingUp } from 'react-icons/gi';
 import toast from 'react-hot-toast';
