@@ -3,6 +3,13 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import TrainerDashboard from './pages/TrainerDashboard';
+import TrainingPlans from './pages/TrainingPlans';
+import CreateTrainingPlan from './pages/CreateTrainingPlan';
+import TrainingPlanDetail from './pages/TrainingPlanDetail';
+import AdminPanel from './pages/AdminPanel';
+import MyTrainingPlan from './pages/MyTrainingPlan';
+import FindTrainer from './pages/FindTrainer';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -33,6 +40,62 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trainer-dashboard"
+        element={
+          <ProtectedRoute>
+            <TrainerDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/training-plans"
+        element={
+          <ProtectedRoute>
+            <TrainingPlans />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/training-plans/create"
+        element={
+          <ProtectedRoute>
+            <CreateTrainingPlan />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/training-plans/:id"
+        element={
+          <ProtectedRoute>
+            <TrainingPlanDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-training-plan"
+        element={
+          <ProtectedRoute>
+            <MyTrainingPlan />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/find-trainer"
+        element={
+          <ProtectedRoute>
+            <FindTrainer />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPanel />
           </ProtectedRoute>
         }
       />

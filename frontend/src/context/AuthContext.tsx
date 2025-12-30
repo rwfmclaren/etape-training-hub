@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authAPI } from '../services/api';
-import type { User, LoginRequest, RegisterRequest } from '../types';
+import type { User, LoginRequest, RegisterRequest, UserRole } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -9,6 +9,10 @@ interface AuthContextType {
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isAthlete: boolean;
+  isTrainer: boolean;
+  isAdmin: boolean;
+  hasRole: (role: UserRole) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,6 +67,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(null);
   };
 
+  const hasRole = (role: UserRole): boolean => {
+    return user?.role === role;
+  };
+
   const value = {
     user,
     loading,
@@ -70,6 +78,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     register,
     logout,
     isAuthenticated: !!user,
+    isAthlete: hasRole('athlete'),
+    isTrainer: hasRole('trainer'),
+    isAdmin: hasRole('admin'),
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

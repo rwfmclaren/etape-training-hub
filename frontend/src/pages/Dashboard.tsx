@@ -1,10 +1,12 @@
 import { useEffect, useState, FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ridesAPI, workoutsAPI, goalsAPI } from '../services/api';
 import type { Ride, Workout, Goal, RideCreate, WorkoutCreate, GoalCreate } from '../types';
+import Layout from '../components/Layout';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, isAthlete, isTrainer, isAdmin } = useAuth();
   const [rides, setRides] = useState<Ride[]>([]);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -248,32 +250,26 @@ export default function Dashboard() {
   const activeGoals = goals.filter((g) => !g.is_completed).length;
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '30px',
-        }}
-      >
+    <Layout>
+      <div style={{ marginBottom: '2rem' }}>
         <h1>Training Dashboard</h1>
-        <div>
-          <span style={{ marginRight: '20px' }}>Welcome, {user?.full_name || user?.email}</span>
-          <button
-            onClick={logout}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Logout
-          </button>
-        </div>
+        <p style={{ color: '#666' }}>Welcome back, {user?.full_name || user?.email}!</p>
+
+        {isTrainer && (
+          <div style={{ padding: '1rem', backgroundColor: '#e3f2fd', borderRadius: '8px', marginTop: '1rem' }}>
+            <p style={{ margin: 0 }}>
+              👥 <Link to="/trainer-dashboard" style={{ color: '#1976d2' }}>View your trainer dashboard</Link> to manage athletes and training plans
+            </p>
+          </div>
+        )}
+
+        {isAdmin && (
+          <div style={{ padding: '1rem', backgroundColor: '#fff3cd', borderRadius: '8px', marginTop: '1rem' }}>
+            <p style={{ margin: 0 }}>
+              ⚙️ <Link to="/admin" style={{ color: '#856404' }}>Access admin panel</Link> to manage users and view system stats
+            </p>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -852,7 +848,7 @@ export default function Dashboard() {
           </div>
         </>
       )}
-    </div>
+    </Layout>
   );
 }
 
