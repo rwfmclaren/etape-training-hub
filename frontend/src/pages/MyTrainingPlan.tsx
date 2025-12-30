@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { trainingPlansAPI } from '../services/api';
 import type { TrainingPlan } from '../types';
 import Layout from '../components/Layout';
+import Card, { StatCard } from '../components/ui/Card';
+import Loading from '../components/ui/Loading';
+import EmptyState from '../components/ui/EmptyState';
+import Button from '../components/ui/Button';
+import { HiOutlineFlag, HiCalendar, HiDocument } from 'react-icons/hi';
+import { GiWeightLiftingUp } from 'react-icons/gi';
+import toast from 'react-hot-toast';
 
 export default function MyTrainingPlan() {
   const [activePlan, setActivePlan] = useState<TrainingPlan | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     loadPlans();
@@ -27,30 +34,31 @@ export default function MyTrainingPlan() {
         setActivePlan(fullPlan);
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load training plan');
+      toast.error(err.response?.data?.detail || 'Failed to load training plan');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <Layout><div>Loading...</div></Layout>;
-  if (error) return <Layout><div style={{ color: 'red' }}>{error}</div></Layout>;
+  if (loading) return <Layout><Loading text="Loading training plan..." /></Layout>;
 
   if (!activePlan) {
     return (
       <Layout>
-        <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <h2>No Training Plan Assigned</h2>
-          <p style={{ color: '#666', marginBottom: '1.5rem' }}>
-            You don't have an active training plan yet. Your trainer will create one for you.
-          </p>
-          <p style={{ color: '#666' }}>
-            Don't have a trainer?{' '}
-            <a href="/find-trainer" style={{ color: '#3498db' }}>
-              Find one here
-            </a>
-          </p>
-        </div>
+        <EmptyState
+          icon={GiWeightLiftingUp}
+          title="No Training Plan Assigned"
+          description="You don't have an active training plan yet. Your trainer will create one for you."
+        >
+          <div className="mt-6">
+            <p className="text-gray-600 mb-4">
+              Don't have a trainer?{' '}
+              <Link to="/find-trainer" className="text-primary-600 hover:text-primary-700 font-medium">
+                Find one here
+              </Link>
+            </p>
+          </div>
+        </EmptyState>
       </Layout>
     );
   }
@@ -63,181 +71,177 @@ export default function MyTrainingPlan() {
 
   return (
     <Layout>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1>{activePlan.title}</h1>
-        <p style={{ color: '#666', marginBottom: '0.5rem' }}>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{activePlan.title}</h1>
+        <p className="text-gray-600">
           {activePlan.start_date && `${new Date(activePlan.start_date).toLocaleDateString()} - `}
           {activePlan.end_date ? new Date(activePlan.end_date).toLocaleDateString() : 'Ongoing'}
         </p>
         {activePlan.description && (
-          <div
-            style={{
-              padding: '1rem',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '4px',
-              marginTop: '1rem',
-            }}
-          >
-            <p style={{ margin: 0 }}>{activePlan.description}</p>
-          </div>
+          <Card className="mt-4 bg-gray-50">
+            <p className="text-gray-700">{activePlan.description}</p>
+          </Card>
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ padding: '1.5rem', backgroundColor: '#3498db', color: 'white', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 0.5rem 0' }}>Overall Progress</h3>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 'bold' }}>{progress}%</p>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
-            {completedWorkouts} of {totalWorkouts} workouts completed
-          </p>
-        </div>
-        <div style={{ padding: '1.5rem', backgroundColor: '#2ecc71', color: 'white', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 0.5rem 0' }}>Goals Achieved</h3>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 'bold' }}>
-            {achievedGoals}/{totalGoals}
-          </p>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
-            {totalGoals > 0 ? Math.round((achievedGoals / totalGoals) * 100) : 0}% complete
-          </p>
-        </div>
-        <div style={{ padding: '1.5rem', backgroundColor: '#9b59b6', color: 'white', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 0.5rem 0' }}>Resources</h3>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 'bold' }}>
-            {activePlan.documents?.length || 0}
-          </p>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
-            documents available
-          </p>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <StatCard
+          title="Overall Progress"
+          value={`${progress}%`}
+          subtitle={`${completedWorkouts} of ${totalWorkouts} workouts`}
+          color="blue"
+        />
+        <StatCard
+          title="Goals Achieved"
+          value={`${achievedGoals}/${totalGoals}`}
+          subtitle={`${totalGoals > 0 ? Math.round((achievedGoals / totalGoals) * 100) : 0}% complete`}
+          color="green"
+        />
+        <StatCard
+          title="Resources"
+          value={activePlan.documents?.length || 0}
+          subtitle="documents available"
+          color="purple"
+          icon={HiDocument}
+        />
       </div>
 
-      <div style={{ marginBottom: '2rem' }}>
-        <h2>Upcoming Workouts</h2>
+      {/* Upcoming Workouts */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Upcoming Workouts</h2>
         {(!activePlan.workouts || activePlan.workouts.length === 0) ? (
-          <p style={{ color: '#666' }}>No workouts scheduled yet.</p>
+          <Card className="p-6 text-center">
+            <p className="text-gray-600">No workouts scheduled yet.</p>
+          </Card>
         ) : (
-          <div style={{ display: 'grid', gap: '1rem' }}>
+          <div className="grid gap-4">
             {activePlan.workouts
               .filter(w => !w.is_completed)
               .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime())
               .slice(0, 5)
               .map((workout) => (
-                <div
-                  key={workout.id}
-                  style={{
-                    padding: '1.5rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ margin: '0 0 0.5rem 0' }}>{workout.title}</h3>
-                      <p style={{ margin: '0 0 0.5rem 0', color: '#666' }}>
-                        {workout.workout_type}
-                        {workout.duration_minutes && ` • ${workout.duration_minutes} min`}
-                        {workout.intensity && ` • ${workout.intensity} intensity`}
-                      </p>
-                      <p style={{ margin: 0, fontSize: '0.875rem', color: '#999' }}>
-                        📅 {new Date(workout.scheduled_date).toLocaleDateString()}
-                      </p>
+                <Card key={workout.id} hover>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{workout.title}</h3>
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-2">
+                        <span className="capitalize">{workout.workout_type}</span>
+                        {workout.duration_minutes && <span>• {workout.duration_minutes} min</span>}
+                        {workout.intensity && <span>• {workout.intensity} intensity</span>}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <HiCalendar className="w-4 h-4 mr-1" />
+                        <span>{new Date(workout.scheduled_date).toLocaleDateString()}</span>
+                      </div>
                       {workout.description && (
-                        <p style={{ margin: '0.5rem 0 0 0', color: '#666' }}>
-                          {workout.description}
-                        </p>
+                        <p className="mt-3 text-gray-700">{workout.description}</p>
                       )}
                     </div>
                   </div>
-                </div>
+                </Card>
               ))}
           </div>
         )}
       </div>
 
-      <div style={{ marginBottom: '2rem' }}>
-        <h2>Goals</h2>
+      {/* Goals */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Goals</h2>
         {(!activePlan.goals || activePlan.goals.length === 0) ? (
-          <p style={{ color: '#666' }}>No goals set yet.</p>
+          <Card className="p-6 text-center">
+            <p className="text-gray-600">No goals set yet.</p>
+          </Card>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+          <div className="grid md:grid-cols-2 gap-4">
             {activePlan.goals.map((goal) => (
-              <div
+              <Card
                 key={goal.id}
-                style={{
-                  padding: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: goal.is_achieved ? '#d5f4e6' : 'white',
-                }}
+                className={goal.is_achieved ? 'border-l-4 border-green-500 bg-green-50' : ''}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 0.5rem 0' }}>{goal.title}</h4>
-                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#666' }}>
-                      {goal.goal_type}
-                      {goal.target_value && ` • ${goal.target_value}${goal.unit || ''}`}
-                    </p>
-                    {goal.target_date && (
-                      <p style={{ margin: 0, fontSize: '0.875rem', color: '#999' }}>
-                        Target: {new Date(goal.target_date).toLocaleDateString()}
-                      </p>
-                    )}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-lg font-semibold text-gray-900">{goal.title}</h4>
+                      {goal.is_achieved && (
+                        <span className="text-2xl">🎯</span>
+                      )}
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center text-gray-700">
+                        <span className="font-medium mr-2">Type:</span>
+                        <span className="px-2 py-1 bg-primary-100 text-primary-800 rounded-md text-xs font-medium capitalize">
+                          {goal.goal_type}
+                        </span>
+                      </div>
+                      {goal.target_value && (
+                        <div className="flex items-center text-gray-700">
+                          <span className="font-medium mr-2">Target:</span>
+                          <span>{goal.target_value} {goal.unit || ''}</span>
+                        </div>
+                      )}
+                      {goal.target_date && (
+                        <div className="flex items-center text-gray-500">
+                          <HiCalendar className="w-4 h-4 mr-1" />
+                          <span>Target: {new Date(goal.target_date).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                      {goal.is_achieved && (
+                        <div className="mt-3">
+                          <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            ✓ Achieved
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {goal.is_achieved && (
-                    <span style={{ fontSize: '1.5rem' }}>✅</span>
-                  )}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
       </div>
 
+      {/* Training Documents */}
       {activePlan.documents && activePlan.documents.length > 0 && (
-        <div>
-          <h2>Training Documents</h2>
-          <div style={{ border: '1px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
-            {activePlan.documents.map((doc) => (
-              <div
-                key={doc.id}
-                style={{
-                  padding: '1rem',
-                  borderBottom: '1px solid #ddd',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div>
-                  <p style={{ margin: '0 0 0.25rem 0', fontWeight: 'bold' }}>📄 {doc.filename}</p>
-                  {doc.description && (
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: '#666' }}>{doc.description}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    trainingPlansAPI.downloadDocument(activePlan.id, doc.id).then((blob) => {
-                      const url = window.URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = doc.filename;
-                      a.click();
-                    });
-                  }}
-                  style={{
-                    backgroundColor: '#3498db',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Training Documents</h2>
+          <Card>
+            <div className="divide-y divide-gray-200">
+              {activePlan.documents.map((doc, index) => (
+                <div
+                  key={doc.id}
+                  className={`flex items-center justify-between p-4 ${index === 0 ? '' : ''}`}
                 >
-                  Download
-                </button>
-              </div>
-            ))}
-          </div>
+                  <div className="flex items-center flex-1">
+                    <HiDocument className="w-6 h-6 text-primary-600 mr-3" />
+                    <div>
+                      <p className="font-semibold text-gray-900">{doc.filename}</p>
+                      {doc.description && (
+                        <p className="text-sm text-gray-600">{doc.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      trainingPlansAPI.downloadDocument(activePlan.id, doc.id).then((blob) => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = doc.filename;
+                        a.click();
+                      });
+                    }}
+                  >
+                    Download
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
     </Layout>
