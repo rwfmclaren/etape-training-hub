@@ -206,7 +206,7 @@ export default function AdminPanel() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex gap-2">
                       <Button
-                        variant={user.is_locked ? 'primary' : 'warning'}
+                        variant={user.is_locked ? 'primary' : 'secondary'}
                         size="sm"
                         onClick={() => handleLockUser(user.id, !user.is_locked)}
                       >

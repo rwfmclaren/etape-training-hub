@@ -7,7 +7,7 @@ import Card, { StatCard } from '../components/ui/Card';
 import Loading from '../components/ui/Loading';
 import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
-import { HiOutlineFlag, HiCalendar, HiDocument } from 'react-icons/hi';
+import { HiCalendar, HiDocument } from 'react-icons/hi';
 import { GiWeightLiftingUp } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 
@@ -49,16 +49,17 @@ export default function MyTrainingPlan() {
           icon={GiWeightLiftingUp}
           title="No Training Plan Assigned"
           description="You don't have an active training plan yet. Your trainer will create one for you."
-        >
-          <div className="mt-6">
-            <p className="text-gray-600 mb-4">
-              Don't have a trainer?{' '}
-              <Link to="/find-trainer" className="text-primary-600 hover:text-primary-700 font-medium">
-                Find one here
-              </Link>
-            </p>
-          </div>
-        </EmptyState>
+          action={
+            <div className="mt-6">
+              <p className="text-gray-600 mb-4">
+                Don't have a trainer?{' '}
+                <Link to="/find-trainer" className="text-primary-600 hover:text-primary-700 font-medium">
+                  Find one here
+                </Link>
+              </p>
+            </div>
+          }
+        />
       </Layout>
     );
   }
@@ -90,19 +91,16 @@ export default function MyTrainingPlan() {
         <StatCard
           title="Overall Progress"
           value={`${progress}%`}
-          subtitle={`${completedWorkouts} of ${totalWorkouts} workouts`}
           color="blue"
         />
         <StatCard
           title="Goals Achieved"
           value={`${achievedGoals}/${totalGoals}`}
-          subtitle={`${totalGoals > 0 ? Math.round((achievedGoals / totalGoals) * 100) : 0}% complete`}
           color="green"
         />
         <StatCard
           title="Resources"
           value={activePlan.documents?.length || 0}
-          subtitle="documents available"
           color="purple"
           icon={HiDocument}
         />

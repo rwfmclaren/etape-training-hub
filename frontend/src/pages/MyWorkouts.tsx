@@ -76,13 +76,6 @@ export default function MyWorkouts() {
                         <span className="font-medium capitalize">{workout.intensity} intensity</span>
                       </div>
                     )}
-
-                    {workout.calories_burned && (
-                      <div className="flex items-center text-gray-700">
-                        <span className="mr-1">⚡</span>
-                        <span className="font-medium">{workout.calories_burned} cal</span>
-                      </div>
-                    )}
                   </div>
 
                   <div className="flex items-center gap-3 mt-4 text-sm">
@@ -97,11 +90,6 @@ export default function MyWorkouts() {
                         })}
                       </span>
                     </div>
-                    {workout.is_completed && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-md text-xs font-medium">
-                        ✓ Completed
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

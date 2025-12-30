@@ -175,13 +175,14 @@ export default function TrainerDashboard() {
             icon={GiWeightLiftingUp}
             title="No training plans yet"
             description="Create your first training plan to get started."
-          >
-            <div className="mt-6">
-              <Link to="/training-plans/create">
-                <Button variant="primary">Create Training Plan</Button>
-              </Link>
-            </div>
-          </EmptyState>
+            action={
+              <div className="mt-6">
+                <Link to="/training-plans/create">
+                  <Button variant="primary">Create Training Plan</Button>
+                </Link>
+              </div>
+            }
+          />
         ) : (
           <>
             <Card>

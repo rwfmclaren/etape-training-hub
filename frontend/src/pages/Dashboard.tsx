@@ -46,7 +46,7 @@ export default function Dashboard() {
   const totalDistance = rides.reduce((sum, ride) => sum + ride.distance_km, 0);
   const totalRides = rides.length;
   const totalWorkouts = workouts.length;
-  const activeGoals = goals.filter((g) => !g.is_achieved).length;
+  const activeGoals = goals.filter((g) => !g.is_completed).length;
 
   return (
     <Layout>
@@ -235,7 +235,7 @@ export default function Dashboard() {
           )}
 
           {/* Active Goals */}
-          {goals.filter(g => !g.is_achieved).length > 0 && (
+          {goals.filter(g => !g.is_completed).length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -247,7 +247,7 @@ export default function Dashboard() {
                 </Link>
               </div>
               <div className="grid md:grid-cols-2 gap-3">
-                {goals.filter(g => !g.is_achieved).slice(0, 4).map((goal) => (
+                {goals.filter(g => !g.is_completed).slice(0, 4).map((goal) => (
                   <Card key={goal.id} className="p-4">
                     <h4 className="font-semibold text-gray-900 mb-2">{goal.title}</h4>
                     {goal.target_value && goal.current_value !== null && goal.current_value !== undefined && (

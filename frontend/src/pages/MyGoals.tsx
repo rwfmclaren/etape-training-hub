@@ -50,13 +50,13 @@ export default function MyGoals() {
             <Card
               key={goal.id}
               hover
-              className={goal.is_achieved ? 'border-l-4 border-green-500 bg-green-50' : ''}
+              className={goal.is_completed ? 'border-l-4 border-green-500 bg-green-50' : ''}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">{goal.title}</h3>
-                    {goal.is_achieved && (
+                    {goal.is_completed && (
                       <span className="text-2xl ml-2">🎯</span>
                     )}
                   </div>
@@ -121,10 +121,10 @@ export default function MyGoals() {
                       </div>
                     )}
 
-                    {goal.is_achieved && (
+                    {goal.is_completed && (
                       <div className="mt-3">
                         <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                          ✓ Achieved
+                          ✓ Completed
                         </span>
                       </div>
                     )}
