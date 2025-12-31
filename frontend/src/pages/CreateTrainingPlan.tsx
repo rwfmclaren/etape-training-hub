@@ -159,7 +159,7 @@ export default function CreateTrainingPlan() {
         for (const nutrition of nutritionGuidelines) {
           await trainingPlansAPI.addNutrition(plan.id, {
             training_plan_id: plan.id,
-            day_of_week: nutrition.day_of_week,
+            day_of_week: DAYS[nutrition.day_of_week],
             meal_type: nutrition.meal_type,
             description: nutrition.description,
           });
