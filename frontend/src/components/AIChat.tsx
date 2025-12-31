@@ -13,7 +13,7 @@ interface Message {
 export default function AIChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hi! I'm your AI training assistant. Ask me about your progress, nutrition tips, or training advice!' }
+    { role: 'assistant', content: 'Hi! I am your AI training assistant. Ask me about your progress, nutrition tips, or training advice!' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
