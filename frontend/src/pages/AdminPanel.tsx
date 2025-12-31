@@ -1,16 +1,16 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { adminAPI } from '../services/api';
-import type { User, UserRole, SystemStats, InviteToken } from '../types';
+import type { User, UserRole, SystemStats, InviteToken, TrainerAssignment } from '../types';
 import Layout from '../components/Layout';
 import Card, { StatCard } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
-import { HiUsers, HiShieldCheck, HiPlus, HiLink, HiClipboard, HiX } from 'react-icons/hi';
+import { HiUsers, HiShieldCheck, HiPlus, HiLink, HiClipboard, HiX, HiUserGroup } from 'react-icons/hi';
 import { BiCycling } from 'react-icons/bi';
 import { GiWeightLiftingUp } from 'react-icons/gi';
 import toast from 'react-hot-toast';
 
-type Tab = 'users' | 'invites';
+type Tab = 'users' | 'invites' | 'assignments';
 
 export default function AdminPanel() {
   const [users, setUsers] = useState<User[]>([]);
@@ -33,20 +33,28 @@ export default function AdminPanel() {
   const [inviteExpiry, setInviteExpiry] = useState(7);
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [generatedInviteLink, setGeneratedInviteLink] = useState('');
+  const [assignments, setAssignments] = useState<TrainerAssignment[]>([]);
+  const [selectedTrainer, setSelectedTrainer] = useState<number | ''>('');
+  const [selectedAthlete, setSelectedAthlete] = useState<number | ''>('');
+  const [assignmentNotes, setAssignmentNotes] = useState('');
+  const [creatingAssignment, setCreatingAssignment] = useState(false);
+
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [usersData, statsData, invitesData] = await Promise.all([
+      const [usersData, statsData, invitesData, assignmentsData] = await Promise.all([
         adminAPI.getUsers(0, 100, roleFilter || undefined),
         adminAPI.getStats(),
         adminAPI.getInvites(),
+        adminAPI.getAssignments(false),
       ]);
       setUsers(usersData);
       setStats(statsData);
       setInvites(invitesData);
+      setAssignments(assignmentsData);
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Failed to load data');
     } finally {
@@ -54,7 +62,30 @@ export default function AdminPanel() {
     }
   };
 
-  const handleAddUser = async (e: FormEvent) => {
+  
+  const trainers = users.filter(u => u.role === 'trainer');
+  const athletes = users.filter(u => u.role === 'athlete');
+
+  const handleCreateAssignment = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedTrainer || !selectedAthlete) { toast.error('Select both trainer and athlete'); return; }
+    setCreatingAssignment(true);
+    try {
+      await adminAPI.createAssignment(Number(selectedTrainer), Number(selectedAthlete), assignmentNotes || undefined);
+      toast.success('Assignment created!');
+      setSelectedTrainer(''); setSelectedAthlete(''); setAssignmentNotes('');
+      await loadData();
+    } catch (err: any) { toast.error(err.response?.data?.detail || 'Failed'); } 
+    finally { setCreatingAssignment(false); }
+  };
+
+  const handleDeleteAssignment = async (id: number) => {
+    if (!confirm('Remove this assignment?')) return;
+    try { await adminAPI.deleteAssignment(id); toast.success('Removed'); await loadData(); } 
+    catch (err: any) { toast.error(err.response?.data?.detail || 'Failed'); }
+  };
+
+const handleAddUser = async (e: FormEvent) => {
     e.preventDefault();
     if (!newUserEmail || !newUserPassword) { toast.error('Email and password required'); return; }
     setAddingUser(true);
@@ -118,16 +149,18 @@ export default function AdminPanel() {
       </div>
 
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <StatCard title="Total Users" value={stats.total_users.toString()} icon={HiUsers} color="blue" />
           <StatCard title="Athletes" value={stats.total_athletes.toString()} icon={BiCycling} color="green" />
           <StatCard title="Trainers" value={stats.total_trainers.toString()} icon={GiWeightLiftingUp} color="purple" />
           <StatCard title="Admins" value={stats.total_admins.toString()} icon={HiShieldCheck} color="red" />
+          <StatCard title="Assignments" value={stats.total_active_assignments.toString()} icon={HiUserGroup} color="orange" />
         </div>
       )}
 
       <div className="flex gap-4 mb-6 border-b border-gray-200">
         <button onClick={() => setActiveTab('users')} className={`pb-3 px-1 font-medium ${activeTab === 'users' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'}`}>Users ({users.length})</button>
+        <button onClick={() => setActiveTab('assignments')} className={`pb-3 px-1 font-medium ${activeTab === 'assignments' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'}`}>Assignments ({assignments.filter(a => a.is_active).length})</button>
         <button onClick={() => setActiveTab('invites')} className={`pb-3 px-1 font-medium ${activeTab === 'invites' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-gray-500'}`}>Invites ({invites.filter(i => i.is_valid).length})</button>
       </div>
 
@@ -177,6 +210,70 @@ export default function AdminPanel() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
+      )}
+      
+      {activeTab === 'assignments' && (
+        <>
+          <Card className="mb-6">
+            <h3 className="text-lg font-semibold mb-4">Assign Athlete to Trainer</h3>
+            <form onSubmit={handleCreateAssignment} className="grid gap-4 md:grid-cols-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Trainer</label>
+                <select value={selectedTrainer} onChange={(e) => setSelectedTrainer(e.target.value ? Number(e.target.value) : '')} className="input w-full">
+                  <option value="">Select trainer...</option>
+                  {trainers.map(t => <option key={t.id} value={t.id}>{t.full_name || t.email}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Athlete</label>
+                <select value={selectedAthlete} onChange={(e) => setSelectedAthlete(e.target.value ? Number(e.target.value) : '')} className="input w-full">
+                  <option value="">Select athlete...</option>
+                  {athletes.map(a => <option key={a.id} value={a.id}>{a.full_name || a.email}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Notes</label>
+                <input type="text" value={assignmentNotes} onChange={(e) => setAssignmentNotes(e.target.value)} className="input w-full" placeholder="Optional..." />
+              </div>
+              <div className="flex items-end">
+                <Button variant="primary" type="submit" isLoading={creatingAssignment} className="w-full"><HiPlus className="w-4 h-4 mr-1 inline" />Assign</Button>
+              </div>
+            </form>
+          </Card>
+          <Card>
+            <h3 className="text-lg font-semibold mb-4">Current Assignments</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trainer</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Athlete</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {assignments.length === 0 ? (
+                    <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No assignments yet.</td></tr>
+                  ) : assignments.map((a) => {
+                    const trainer = users.find(u => u.id === a.trainer_id);
+                    const athlete = users.find(u => u.id === a.athlete_id);
+                    return (
+                      <tr key={a.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4"><div className="text-sm font-medium">{trainer?.full_name || trainer?.email || 'Unknown'}</div></td>
+                        <td className="px-6 py-4"><div className="text-sm font-medium">{athlete?.full_name || athlete?.email || 'Unknown'}</div></td>
+                        <td className="px-6 py-4 text-sm">{new Date(a.assigned_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${a.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{a.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td className="px-6 py-4"><Button variant="danger" size="sm" onClick={() => handleDeleteAssignment(a.id)}>Remove</Button></td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

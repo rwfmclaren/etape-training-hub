@@ -313,6 +313,16 @@ export const adminAPI = {
   },
 };
 
+
+
+// AI Chat
+export const aiChatAPI = {
+  sendMessage: async (message: string): Promise<{ response: string; success: boolean }> => {
+    const response = await api.post('/chat/', { message });
+    return response.data;
+  },
+};
+
 export default api;
 
 // AI Training Plan Builder

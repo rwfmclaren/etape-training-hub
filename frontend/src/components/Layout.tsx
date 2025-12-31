@@ -1,4 +1,5 @@
 import Sidebar from './Sidebar';
+import AIChat from './AIChat';
 import ToastProvider from './ToastProvider';
 
 interface LayoutProps {
@@ -16,6 +17,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </main>
       </div>
+      <AIChat />
       <ToastProvider />
     </div>
   );
