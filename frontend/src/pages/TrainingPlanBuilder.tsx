@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { aiPlanBuilderAPI, trainerAthleteAPI } from '../services/api';
 import type { User } from '../types';
@@ -8,7 +8,6 @@ import Button from '../components/ui/Button';
 import Loading from '../components/ui/Loading';
 import { HiUpload, HiDocumentText, HiCheck, HiX } from 'react-icons/hi';
 import toast from 'react-hot-toast';
-import { useEffect } from 'react';
 
 interface ParsedWorkout {
   title: string;
@@ -35,6 +34,7 @@ type Step = 'upload' | 'preview' | 'assign';
 
 export default function TrainingPlanBuilder() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>('upload');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -54,6 +54,10 @@ export default function TrainingPlanBuilder() {
     } catch (err) {
       toast.error('Failed to load athletes');
     }
+  };
+
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,8 +81,12 @@ export default function TrainingPlanBuilder() {
       toast.error(err.response?.data?.detail || 'Failed to parse PDF');
     } finally {
       setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
+
   const handleSavePlan = async () => {
     if (!selectedAthlete || !parsedData) return;
     setSaving(true);
@@ -105,6 +113,15 @@ export default function TrainingPlanBuilder() {
         <h1 className="text-3xl font-bold text-gray-900">AI Training Plan Builder</h1>
         <p className="text-gray-600 mt-1">Upload a PDF training plan and let AI extract the structure</p>
       </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
 
       {/* Steps indicator */}
       <div className="flex items-center mb-8">
@@ -136,20 +153,10 @@ export default function TrainingPlanBuilder() {
             {uploading ? (
               <Loading text="Analyzing PDF with AI..." />
             ) : (
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <Button variant="primary" as-child>
-                  <span>
-                    <HiUpload className="w-5 h-5 mr-2 inline" />
-                    Choose PDF File
-                  </span>
-                </Button>
-              </label>
+              <Button variant="primary" onClick={handleFileSelect}>
+                <HiUpload className="w-5 h-5 mr-2 inline" />
+                Choose PDF File
+              </Button>
             )}
           </div>
         </Card>
@@ -167,7 +174,7 @@ export default function TrainingPlanBuilder() {
                   type="text"
                   value={parsedData.title || ''}
                   onChange={(e) => updateParsedData('title', e.target.value)}
-                  className="input"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
               <div>
@@ -176,7 +183,7 @@ export default function TrainingPlanBuilder() {
                   type="number"
                   value={parsedData.duration_weeks || 12}
                   onChange={(e) => updateParsedData('duration_weeks', parseInt(e.target.value))}
-                  className="input"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
@@ -185,7 +192,7 @@ export default function TrainingPlanBuilder() {
               <textarea
                 value={parsedData.description || ''}
                 onChange={(e) => updateParsedData('description', e.target.value)}
-                className="input"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 rows={3}
               />
             </div>
@@ -275,7 +282,7 @@ export default function TrainingPlanBuilder() {
                 <select
                   value={selectedAthlete || ''}
                   onChange={(e) => setSelectedAthlete(e.target.value ? parseInt(e.target.value) : null)}
-                  className="input"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Select an athlete...</option>
                   {athletes.map((a) => (
@@ -293,7 +300,7 @@ export default function TrainingPlanBuilder() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="input"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
