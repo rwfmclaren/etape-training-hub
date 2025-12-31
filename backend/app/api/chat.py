@@ -110,7 +110,7 @@ Be supportive and motivating."""
 
     try:
         response = claude_service.client.messages.create(
-            model="claude-sonnet-4-20250114",
+            model="claude-sonnet-4-20250514",
             max_tokens=500,
             messages=[{"role": "user", "content": prompt}]
         )
