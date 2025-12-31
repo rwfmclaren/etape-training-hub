@@ -2,10 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   HiHome,
-  HiUsers,
   HiClipboardList,
-  HiUserGroup,
-  HiChartBar,
   HiSearch,
   HiDocumentText,
   HiOutlineFlag,

@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { aiChatAPI } from '../services/api';
-import Button from './ui/Button';
-import Card from './ui/Card';
 import { HiChat, HiX, HiPaperAirplane } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
