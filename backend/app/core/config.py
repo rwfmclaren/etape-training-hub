@@ -13,6 +13,11 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql://user:password@db:5432/etape_training"
 
+    # Strava OAuth
+    STRAVA_CLIENT_ID: Optional[str] = None
+    STRAVA_CLIENT_SECRET: Optional[str] = None
+    STRAVA_REDIRECT_URI: Optional[str] = None
+
     CORS_ORIGINS: list = [
         "http://localhost",
         "http://localhost:80",

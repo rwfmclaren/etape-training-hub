@@ -1,6 +1,9 @@
 import axios from 'axios';
 import type {
   LoginRequest,
+  IntegrationStatus,
+  SyncedActivity,
+  SyncResult,
   Message,
   MessageWithUsers,
   Conversation,
@@ -441,6 +444,37 @@ export const messagesAPI = {
 
   markAsRead: async (messageId: number): Promise<void> => {
     await api.put(`/messages/${messageId}/read`);
+  },
+};
+
+// Integrations API (Strava, etc.)
+export const integrationsAPI = {
+  getStatus: async (): Promise<IntegrationStatus[]> => {
+    const response = await api.get<IntegrationStatus[]>('/integrations/status');
+    return response.data;
+  },
+
+  connectStrava: async (): Promise<{ auth_url: string }> => {
+    const response = await api.get('/integrations/strava/connect');
+    return response.data;
+  },
+
+  disconnectStrava: async (): Promise<void> => {
+    await api.delete('/integrations/strava/disconnect');
+  },
+
+  syncStrava: async (days: number = 30): Promise<SyncResult> => {
+    const response = await api.post<SyncResult>('/integrations/strava/sync', null, {
+      params: { days },
+    });
+    return response.data;
+  },
+
+  getActivities: async (source?: string, activityType?: string, skip: number = 0, limit: number = 50): Promise<SyncedActivity[]> => {
+    const response = await api.get<SyncedActivity[]>('/integrations/activities', {
+      params: { source, activity_type: activityType, skip, limit },
+    });
+    return response.data;
   },
 };
 

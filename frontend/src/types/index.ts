@@ -368,3 +368,41 @@ export interface MessageCreate {
   recipient_id: number;
   content: string;
 }
+
+// Integrations
+export interface IntegrationStatus {
+  provider: string;
+  connected: boolean;
+  connected_at?: string;
+  last_sync?: string;
+  athlete_id?: string;
+}
+
+export interface SyncedActivity {
+  id: number;
+  user_id: number;
+  source: string;
+  external_id?: string;
+  activity_type: string;
+  name: string;
+  activity_date: string;
+  duration_minutes?: number;
+  distance_km?: number;
+  elevation_m?: number;
+  calories?: number;
+  heart_rate_avg?: number;
+  heart_rate_max?: number;
+  power_avg?: number;
+  power_max?: number;
+  cadence_avg?: number;
+  speed_avg_kmh?: number;
+  speed_max_kmh?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SyncResult {
+  success: boolean;
+  activities_synced: number;
+  message: string;
+}

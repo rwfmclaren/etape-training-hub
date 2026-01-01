@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.db.base import Base, engine
-from app.api import auth, rides, workouts, nutrition, goals, trainer_athlete, training_plans, admin, chat, messages
+from app.api import auth, rides, workouts, nutrition, goals, trainer_athlete, training_plans, admin, chat, messages, integrations
 
 Base.metadata.create_all(bind=engine)
 
@@ -41,3 +41,4 @@ def health_check():
     return {"status": "healthy"}
 app.include_router(chat.router, prefix=f"{settings.API_V1_STR}/chat", tags=["chat"])
 app.include_router(messages.router, prefix=f"{settings.API_V1_STR}/messages", tags=["messages"])
+app.include_router(integrations.router, prefix=f"{settings.API_V1_STR}/integrations", tags=["integrations"])

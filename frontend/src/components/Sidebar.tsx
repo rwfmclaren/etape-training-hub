@@ -11,7 +11,8 @@ import {
   HiX,
   HiUpload,
   HiPlus,
-  HiChat
+  HiChat,
+  HiLink
 } from 'react-icons/hi';
 import { BiCycling } from 'react-icons/bi';
 import { GiMuscleUp } from 'react-icons/gi';
@@ -38,6 +39,7 @@ export default function Sidebar() {
     { path: '/my-training-plan', icon: HiDocumentText, label: 'My Training Plan' },
     { path: '/find-trainer', icon: HiSearch, label: 'Find Trainer' },
     { path: '/messages', icon: HiChat, label: 'Messages' },
+    { path: '/integrations', icon: HiLink, label: 'Integrations' },
   ];
 
   const trainerLinks = [

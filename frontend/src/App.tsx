@@ -16,6 +16,7 @@ import MyGoals from './pages/MyGoals';
 import TrainingPlanBuilder from './pages/TrainingPlanBuilder';
 import AthleteDetailView from './pages/AthleteDetailView';
 import Messages from './pages/Messages';
+import Integrations from './pages/Integrations';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -150,6 +151,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Messages />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/integrations"
+        element={
+          <ProtectedRoute>
+            <Integrations />
           </ProtectedRoute>
         }
       />
