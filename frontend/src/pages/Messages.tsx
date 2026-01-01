@@ -124,9 +124,9 @@ export default function Messages() {
       // Add message to list
       setMessages(prev => [...prev, {
         ...msg,
-        sender_name: user?.full_name || null,
+        sender_name: user?.full_name || undefined,
         sender_email: user?.email || '',
-        recipient_name: selectedUserName || null,
+        recipient_name: selectedUserName || undefined,
         recipient_email: ''
       }]);
 
@@ -143,7 +143,7 @@ export default function Messages() {
         }
         return [{
           user_id: selectedUserId,
-          user_name: selectedUserName || null,
+          user_name: selectedUserName || undefined,
           user_email: '',
           last_message: newMessage.trim().slice(0, 100),
           last_message_time: now,
