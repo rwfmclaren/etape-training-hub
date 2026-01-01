@@ -126,28 +126,30 @@ export default function CreateTrainingPlan() {
     try {
       // Create a plan for each selected athlete
       for (const athleteId of selectedAthletes) {
-        const endDate = new Date(startDate);
+        const planStartDate = new Date(startDate + 'T00:00:00');
+        const endDate = new Date(planStartDate);
         endDate.setDate(endDate.getDate() + durationWeeks * 7);
 
+        console.log('Creating plan for athlete:', athleteId);
         const plan = await trainingPlansAPI.create({
           athlete_id: athleteId,
           title,
           description,
-          start_date: startDate,
-          end_date: endDate.toISOString().split('T')[0],
+          start_date: planStartDate.toISOString(),
+          end_date: endDate.toISOString(),
         });
 
         // Add workouts for each week
         for (let week = 1; week <= durationWeeks; week++) {
           for (const workout of workouts) {
-            const scheduledDate = new Date(startDate);
+            const scheduledDate = new Date(planStartDate);
             scheduledDate.setDate(scheduledDate.getDate() + (week - 1) * 7 + workout.day_of_week);
 
             await trainingPlansAPI.addWorkout(plan.id, {
               training_plan_id: plan.id,
               title: workout.title || "Week " + week + " " + DAYS[workout.day_of_week] + " " + workout.workout_type,
               workout_type: workout.workout_type,
-              scheduled_date: scheduledDate.toISOString().split('T')[0],
+              scheduled_date: scheduledDate.toISOString(),
               duration_minutes: workout.duration_minutes,
               description: workout.description,
               intensity: workout.intensity,
@@ -169,7 +171,10 @@ export default function CreateTrainingPlan() {
       toast.success("Training plan created for " + selectedAthletes.length + " athlete(s)!");
       navigate('/training-plans');
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Failed to create plan');
+      console.error('Error creating plan:', err);
+      console.error('Error response:', err.response?.data);
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to create plan';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
