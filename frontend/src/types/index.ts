@@ -336,3 +336,35 @@ export interface UserCreateRequest {
   full_name?: string;
   invite_token?: string;
 }
+
+// Messages
+export interface Message {
+  id: number;
+  sender_id: number;
+  recipient_id: number;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  read_at?: string;
+}
+
+export interface MessageWithUsers extends Message {
+  sender_name?: string;
+  sender_email: string;
+  recipient_name?: string;
+  recipient_email: string;
+}
+
+export interface Conversation {
+  user_id: number;
+  user_name?: string;
+  user_email: string;
+  last_message: string;
+  last_message_time: string;
+  unread_count: number;
+}
+
+export interface MessageCreate {
+  recipient_id: number;
+  content: string;
+}

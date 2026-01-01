@@ -1,6 +1,10 @@
 import axios from 'axios';
 import type {
   LoginRequest,
+  Message,
+  MessageWithUsers,
+  Conversation,
+  MessageCreate,
   RegisterRequest,
   RegisterWithInviteRequest,
   TokenResponse,
@@ -410,3 +414,33 @@ export const trainerDashboardAPI = {
     return response.data;
   },
 };
+
+// Messaging API (trainer-athlete direct messages)
+export const messagesAPI = {
+  getConversations: async (): Promise<Conversation[]> => {
+    const response = await api.get<Conversation[]>('/messages/conversations');
+    return response.data;
+  },
+
+  getMessagesWithUser: async (userId: number, skip: number = 0, limit: number = 50): Promise<MessageWithUsers[]> => {
+    const response = await api.get<MessageWithUsers[]>(`/messages/with/${userId}`, {
+      params: { skip, limit },
+    });
+    return response.data;
+  },
+
+  sendMessage: async (data: MessageCreate): Promise<Message> => {
+    const response = await api.post<Message>('/messages/', data);
+    return response.data;
+  },
+
+  getUnreadCount: async (): Promise<{ unread_count: number }> => {
+    const response = await api.get('/messages/unread-count');
+    return response.data;
+  },
+
+  markAsRead: async (messageId: number): Promise<void> => {
+    await api.put(`/messages/${messageId}/read`);
+  },
+};
+

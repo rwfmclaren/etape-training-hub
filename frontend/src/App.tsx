@@ -15,6 +15,7 @@ import MyWorkouts from './pages/MyWorkouts';
 import MyGoals from './pages/MyGoals';
 import TrainingPlanBuilder from './pages/TrainingPlanBuilder';
 import AthleteDetailView from './pages/AthleteDetailView';
+import Messages from './pages/Messages';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -141,6 +142,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AthleteDetailView />
+          </ProtectedRoute>
+        }
+      />
+            <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <Messages />
           </ProtectedRoute>
         }
       />

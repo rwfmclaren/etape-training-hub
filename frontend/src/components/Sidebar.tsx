@@ -10,7 +10,8 @@ import {
   HiMenu,
   HiX,
   HiUpload,
-  HiPlus
+  HiPlus,
+  HiChat
 } from 'react-icons/hi';
 import { BiCycling } from 'react-icons/bi';
 import { GiMuscleUp } from 'react-icons/gi';
@@ -36,6 +37,7 @@ export default function Sidebar() {
     { path: '/my-goals', icon: HiOutlineFlag, label: 'My Goals' },
     { path: '/my-training-plan', icon: HiDocumentText, label: 'My Training Plan' },
     { path: '/find-trainer', icon: HiSearch, label: 'Find Trainer' },
+    { path: '/messages', icon: HiChat, label: 'Messages' },
   ];
 
   const trainerLinks = [
@@ -43,6 +45,7 @@ export default function Sidebar() {
     { path: '/training-plans/builder', icon: HiUpload, label: 'AI Plan Builder' },
     { path: '/training-plans', icon: HiClipboardList, label: 'Training Plans' },
     { path: '/training-plans/create', icon: HiPlus, label: 'Create Plan' },
+    { path: '/messages', icon: HiChat, label: 'Messages' },
   ];
 
   const adminLinks = [
